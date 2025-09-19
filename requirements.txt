@@ -1,0 +1,6 @@
+argparse
+compel
+diffusers
+peft
+torch
+transformers
