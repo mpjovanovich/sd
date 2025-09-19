@@ -25,21 +25,34 @@ def do_diffusion(args):
         from diffusers import EulerDiscreteScheduler
         pipeline.scheduler = EulerDiscreteScheduler.from_config(
             pipeline.scheduler.config)
+    if args.scheduler == "EulerAncestralDiscreteScheduler":
+        from diffusers import EulerAncestralDiscreteScheduler
+        pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
+            pipeline.scheduler.config)
     elif args.scheduler == "DPMSolverMultistepScheduler":
         from diffusers import DPMSolverMultistepScheduler
         pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             pipeline.scheduler.config, use_karras_sigmas=True)
+    elif args.scheduler == "DPMSolverMultistepScheduler2MSDEKarras":
+        from diffusers import DPMSolverMultistepScheduler
+        pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            pipeline.scheduler.config,
+            use_karras_sigmas=True,
+            algorithm_type="sde-dpmsolver++")
 
     if args.lora1_file:
         pipeline.load_lora_weights(args.lora1_file, adapter_name="lora1")
     if args.lora2_file:
         pipeline.load_lora_weights(args.lora2_file, adapter_name="lora2")
 
+    embeddings_type = ReturnedEmbeddingsType.LAST_HIDDEN_STATES_NORMALIZED
+    if args.clip_skip == 2:
+        embeddings_type = ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED
+
     compel = Compel(
         tokenizer=[pipeline.tokenizer, pipeline.tokenizer_2],
         text_encoder=[pipeline.text_encoder, pipeline.text_encoder_2],
-        returned_embeddings_type=ReturnedEmbeddingsType.
-        PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED,  # This is clip skip
+        returned_embeddings_type=embeddings_type,
         requires_pooled=[False, True])
 
     seed = random.randint(0, 1000000)
@@ -94,6 +107,7 @@ def load_args():
     parser.add_argument("--checkpoint_file", type=str, required=True)
     parser.add_argument("--output_directory", type=str, required=True)
     parser.add_argument("--scheduler", type=str, required=True)
+    parser.add_argument("--clip_skip", type=int, required=True)
     parser.add_argument("--lora1_file", type=str, required=False)
     parser.add_argument("--lora2_file", type=str, required=False)
     return parser.parse_args()
