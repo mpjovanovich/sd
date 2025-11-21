@@ -84,7 +84,7 @@ def do_diffusion(args):
             # negative_embeds, negative_pooled = compel(
             #     options['negative_prompt'])
 
-            conditioning = compel(prompt, negative_prompt=negative_prompt)
+            conditioning = compel(options['prompt'], negative_prompt=options['negative_prompt'])
 
             # image = pipeline(prompt_embeds=embeds,
             #                  pooled_prompt_embeds=pooled,
