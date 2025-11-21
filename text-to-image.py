@@ -3,7 +3,8 @@ https://huggingface.co/docs/diffusers/en/using-diffusers/sdxl
 https://huggingface.co/docs/diffusers/en/api/pipelines/stable_diffusion/stable_diffusion_xl
 https://github.com/damian0815/compel
 '''
-from compel import Compel, ReturnedEmbeddingsType
+# from compel import Compel, ReturnedEmbeddingsType
+from compel import CompelForSDXL, ReturnedEmbeddingsType
 from datetime import datetime
 from diffusers import StableDiffusionXLPipeline
 import argparse
@@ -49,12 +50,13 @@ def do_diffusion(args):
     if args.clip_skip == 2:
         embeddings_type = ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED
 
-    compel = Compel(
-        tokenizer=[pipeline.tokenizer, pipeline.tokenizer_2],
-        text_encoder=[pipeline.text_encoder, pipeline.text_encoder_2],
-        returned_embeddings_type=embeddings_type,
-        requires_pooled=[False, True])
+    # compel = Compel(
+    #     tokenizer=[pipeline.tokenizer, pipeline.tokenizer_2],
+    #     text_encoder=[pipeline.text_encoder, pipeline.text_encoder_2],
+    #     returned_embeddings_type=embeddings_type,
+    #     requires_pooled=[False, True])
 
+    compel = CompelForSDXL(pipeline)
     seed = random.randint(0, 1000000)
     generator = torch.Generator(device="cuda").manual_seed(seed)
 
@@ -78,19 +80,34 @@ def do_diffusion(args):
             else:
                 pipeline.disable_lora()
 
-            embeds, pooled = compel(options['prompt'])
-            negative_embeds, negative_pooled = compel(
-                options['negative_prompt'])
+            # embeds, pooled = compel(options['prompt'])
+            # negative_embeds, negative_pooled = compel(
+            #     options['negative_prompt'])
 
-            image = pipeline(prompt_embeds=embeds,
-                             pooled_prompt_embeds=pooled,
-                             negative_prompt_embeds=negative_embeds,
-                             negative_pooled_prompt_embeds=negative_pooled,
-                             height=int(options['height']),
-                             width=int(options['width']),
-                             guidance_scale=float(options['scale']),
-                             num_inference_steps=int(options['num_steps']),
-                             generator=generator).images[0]
+            conditioning = compel(prompt, negative_prompt=negative_prompt)
+
+            # image = pipeline(prompt_embeds=embeds,
+            #                  pooled_prompt_embeds=pooled,
+            #                  negative_prompt_embeds=negative_embeds,
+            #                  negative_pooled_prompt_embeds=negative_pooled,
+            #                  height=int(options['height']),
+            #                  width=int(options['width']),
+            #                  guidance_scale=float(options['scale']),
+            #                  num_inference_steps=int(options['num_steps']),
+            #                  generator=generator).images[0]
+
+            image = pipeline(
+                prompt_embeds=conditioning.embeds,
+                pooled_prompt_embeds=conditioning.pooled_embeds,
+                negative_prompt_embeds=conditioning.negative_embeds,
+                negative_pooled_prompt_embeds=conditioning.
+                negative_pooled_embeds,
+                height=int(options['height']),
+                width=int(options['width']),
+                guidance_scale=float(options['scale']),
+                num_inference_steps=int(options['num_steps']),
+                generator=generator).images[0]
+
             date_time = datetime.now().strftime("%Y%m%d%H%M%S")
             image.save(args.output_directory + '/' + date_time + '.png')
 
