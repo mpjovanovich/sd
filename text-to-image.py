@@ -14,6 +14,19 @@ import random
 import torch
 
 
+def checkFils(args):
+    if not os.path.exists(args.output_directory):
+        raise FileNotFoundError(
+            f"Output directory {args.output_directory} not found")
+    if not os.path.exists(args.checkpoint_file):
+        raise FileNotFoundError(
+            f"Checkpoint file {args.checkpoint_file} not found")
+    if not os.path.exists(args.lora1_file):
+        raise FileNotFoundError(f"Lora1 file {args.lora1_file} not found")
+    if not os.path.exists(args.lora2_file):
+        raise FileNotFoundError(f"Lora2 file {args.lora2_file} not found")
+
+
 def do_diffusion(args):
     pipeline = StableDiffusionXLPipeline.from_single_file(
         args.checkpoint_file,
@@ -84,7 +97,8 @@ def do_diffusion(args):
             # negative_embeds, negative_pooled = compel(
             #     options['negative_prompt'])
 
-            conditioning = compel(options['prompt'], negative_prompt=options['negative_prompt'])
+            conditioning = compel(options['prompt'],
+                                  negative_prompt=options['negative_prompt'])
 
             # image = pipeline(prompt_embeds=embeds,
             #                  pooled_prompt_embeds=pooled,
@@ -132,4 +146,5 @@ def load_args():
 
 if __name__ == "__main__":
     args = load_args()
+    checkFils(args)
     do_diffusion(args)
