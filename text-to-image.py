@@ -12,6 +12,7 @@ import json
 import gc
 import random
 import torch
+import os
 
 
 def checkFils(args):
@@ -21,9 +22,9 @@ def checkFils(args):
     if not os.path.exists(args.checkpoint_file):
         raise FileNotFoundError(
             f"Checkpoint file {args.checkpoint_file} not found")
-    if not os.path.exists(args.lora1_file):
+    if args.lora1_file and not os.path.exists(args.lora1_file):
         raise FileNotFoundError(f"Lora1 file {args.lora1_file} not found")
-    if not os.path.exists(args.lora2_file):
+    if args.lora2_file and not os.path.exists(args.lora2_file):
         raise FileNotFoundError(f"Lora2 file {args.lora2_file} not found")
 
 
